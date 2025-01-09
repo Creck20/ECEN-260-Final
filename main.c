@@ -42,24 +42,18 @@
 #define DC_PORT 	GPIOA		// PA0 data/control
 #define DC_PIN 		GPIO_PIN_0
 
-#define RESET_PORT	GPIOA		// PA1 reset
+#define RESET_PORT	GPIOA		//PA1 reset
 #define RESET_PIN   GPIO_PIN_1
 
 #define GLCD_WIDTH 84
 #define GLCD_HEIGHT 48
 #define NUM_BANKS 6
-
-#define ME_PORT    	GPIOB		// PB10 motor enable
-#define ME_PIN		GPIO_PIN_10
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
 SPI_HandleTypeDef hspi1;
 
-TIM_HandleTypeDef htim1;
-
 /* USER CODE BEGIN PV */
-// Character Table:
 const char font_table[][6] = {
 		{0x00, 0x00, 0x00, 0x00, 0x00, 0x00}, // space
 		{0x7E, 0x11, 0x11, 0x11, 0x7E, 0x00}, // 'A'
@@ -100,7 +94,6 @@ const char font_table[][6] = {
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_SPI1_Init(void);
-static void MX_TIM1_Init(void);
 /* USER CODE BEGIN PFP */
 void SPI_write(unsigned char data);
 void GLCD_data_write(unsigned char data);
@@ -109,7 +102,6 @@ void GLCD_init(void);
 void GLCD_setCursor(unsigned char x, unsigned char y);
 void GLCD_clear(void);
 void GLCD_putchar(int font_table_row);
-void MOTOR_enable(int enable);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -147,93 +139,50 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_SPI1_Init();
-  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
-
-  // Display Welcome Message
   GLCD_init(); // initialize the screen
   GLCD_clear(); // clears the screen
-  GLCD_putchar(23); // W
-  GLCD_putchar(1); // A
-  GLCD_putchar(19); // S
   GLCD_putchar(8); // H
-  GLCD_putchar(0); // ' '
-  GLCD_putchar(20); // T
-  GLCD_putchar(9); // I
-  GLCD_putchar(13); // M
   GLCD_putchar(5); // E
-  GLCD_putchar(28); // !
-  GLCD_putchar(30); // smiley left
-  GLCD_putchar(31); // smiley right
-  HAL_Delay(2000); // Pause for 2 seconds
-
-  // Activate PWM to drive the motor:
-  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
-  MOTOR_enable(0);
-  int PWM_PERIOD = 80000; // how many clock cycles for each PWM period
-  float duty_cycle = 0.99;
-  TIM1->CCR1 = (int) (duty_cycle * PWM_PERIOD); // store new duty cycle
-
-  // Wash Cycle
-  GLCD_clear(); // clears the screen
-  GLCD_putchar(23); // W
-  GLCD_putchar(1); // A
-  GLCD_putchar(19); // S
-  GLCD_putchar(8); // H
-
-  for(int i = 0; i < 9; i++){
-	  MOTOR_enable(1);
-	  HAL_Delay(750); // Agitation from repeated start and stop
-	  MOTOR_enable(0);
-	  HAL_Delay(250);
-  }
-
-  // Rinse Cycle
-  GLCD_clear(); // clears the screen
-  GLCD_putchar(18); // R
-  GLCD_putchar(9); // I
-  GLCD_putchar(14); // N
-  GLCD_putchar(19); // S
-  GLCD_putchar(5); // E
-
-  for(int i = 0; i < 9; i++){
-  	  MOTOR_enable(1);
-  	  HAL_Delay(750); // Agitation from repeated start and stop
-  	  MOTOR_enable(0);
-  	  HAL_Delay(250);
-  }
-  // Spin Cycle
-  GLCD_clear(); // clears the screen
-  GLCD_putchar(19); // S
-  GLCD_putchar(16); // P
-  GLCD_putchar(9); // I
-  GLCD_putchar(14); // N
-
-  MOTOR_enable(1);
-  HAL_Delay(10000);
-  MOTOR_enable(0);
-
-  // Finished Message
-  GLCD_clear(); // clears the screen
-  GLCD_putchar(1); // A
   GLCD_putchar(12); // L
   GLCD_putchar(12); // L
-  GLCD_putchar(0); // ' '
-  GLCD_putchar(4); // D
   GLCD_putchar(15); // O
-  GLCD_putchar(14); // N
-  GLCD_putchar(5); // E
+  GLCD_putchar(0); // ' '
+  GLCD_putchar(23); // W
+  GLCD_putchar(15); // O
+  GLCD_putchar(18); // R
+  GLCD_putchar(12); // L
+  GLCD_putchar(4); // D
   GLCD_putchar(28); // !
   GLCD_putchar(30); // smiley left
   GLCD_putchar(31); // smiley right
   HAL_Delay(2000); // Pause for 2 seconds
-  GLCD_clear(); // clears the screen
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  GLCD_clear(); // Animation frame 1
+	  GLCD_putchar(30);
+	  GLCD_putchar(31);
+	  HAL_Delay(750);
+
+	  GLCD_clear(); // Animation frame 2
+	  GLCD_putchar(0);
+	  GLCD_putchar(0);
+	  GLCD_putchar(30);
+	  GLCD_putchar(31);
+	  HAL_Delay(750);
+
+	  GLCD_clear(); // Animation frame 3
+	  GLCD_putchar(0);
+	  GLCD_putchar(0);
+	  GLCD_putchar(0);
+	  GLCD_putchar(0);
+	  GLCD_putchar(30);
+	  GLCD_putchar(31);
+	  HAL_Delay(750);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -331,86 +280,6 @@ static void MX_SPI1_Init(void)
 }
 
 /**
-  * @brief TIM1 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_TIM1_Init(void)
-{
-
-  /* USER CODE BEGIN TIM1_Init 0 */
-
-  /* USER CODE END TIM1_Init 0 */
-
-  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
-  TIM_MasterConfigTypeDef sMasterConfig = {0};
-  TIM_OC_InitTypeDef sConfigOC = {0};
-  TIM_BreakDeadTimeConfigTypeDef sBreakDeadTimeConfig = {0};
-
-  /* USER CODE BEGIN TIM1_Init 1 */
-
-  /* USER CODE END TIM1_Init 1 */
-  htim1.Instance = TIM1;
-  htim1.Init.Prescaler = 0;
-  htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim1.Init.Period = 65535;
-  htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-  htim1.Init.RepetitionCounter = 0;
-  htim1.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
-  if (HAL_TIM_Base_Init(&htim1) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
-  if (HAL_TIM_ConfigClockSource(&htim1, &sClockSourceConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  if (HAL_TIM_PWM_Init(&htim1) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
-  sMasterConfig.MasterOutputTrigger2 = TIM_TRGO2_RESET;
-  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
-  if (HAL_TIMEx_MasterConfigSynchronization(&htim1, &sMasterConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  sConfigOC.OCMode = TIM_OCMODE_PWM1;
-  sConfigOC.Pulse = 0;
-  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
-  sConfigOC.OCNPolarity = TIM_OCNPOLARITY_HIGH;
-  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
-  sConfigOC.OCIdleState = TIM_OCIDLESTATE_RESET;
-  sConfigOC.OCNIdleState = TIM_OCNIDLESTATE_RESET;
-  if (HAL_TIM_PWM_ConfigChannel(&htim1, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  sBreakDeadTimeConfig.OffStateRunMode = TIM_OSSR_DISABLE;
-  sBreakDeadTimeConfig.OffStateIDLEMode = TIM_OSSI_DISABLE;
-  sBreakDeadTimeConfig.LockLevel = TIM_LOCKLEVEL_OFF;
-  sBreakDeadTimeConfig.DeadTime = 0;
-  sBreakDeadTimeConfig.BreakState = TIM_BREAK_DISABLE;
-  sBreakDeadTimeConfig.BreakPolarity = TIM_BREAKPOLARITY_HIGH;
-  sBreakDeadTimeConfig.BreakFilter = 0;
-  sBreakDeadTimeConfig.Break2State = TIM_BREAK2_DISABLE;
-  sBreakDeadTimeConfig.Break2Polarity = TIM_BREAK2POLARITY_HIGH;
-  sBreakDeadTimeConfig.Break2Filter = 0;
-  sBreakDeadTimeConfig.AutomaticOutput = TIM_AUTOMATICOUTPUT_DISABLE;
-  if (HAL_TIMEx_ConfigBreakDeadTime(&htim1, &sBreakDeadTimeConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN TIM1_Init 2 */
-
-  /* USER CODE END TIM1_Init 2 */
-  HAL_TIM_MspPostInit(&htim1);
-
-}
-
-/**
   * @brief GPIO Initialization Function
   * @param None
   * @retval None
@@ -431,7 +300,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0|GPIO_PIN_1, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_10|Motor_Enable_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_RESET);
 
   /*Configure GPIO pins : PA0 PA1 */
   GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1;
@@ -440,29 +309,18 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : PA4 */
-  GPIO_InitStruct.Pin = GPIO_PIN_4;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
-  GPIO_InitStruct.Pull = GPIO_PULLUP;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-  /*Configure GPIO pins : PB10 Motor_Enable_Pin */
-  GPIO_InitStruct.Pin = GPIO_PIN_10|Motor_Enable_Pin;
+  /*Configure GPIO pin : PB6 */
+  GPIO_InitStruct.Pin = GPIO_PIN_6;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
-  /* EXTI interrupt init*/
-  HAL_NVIC_SetPriority(EXTI4_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(EXTI4_IRQn);
 
 /* USER CODE BEGIN MX_GPIO_Init_2 */
 /* USER CODE END MX_GPIO_Init_2 */
 }
 
 /* USER CODE BEGIN 4 */
-// Uses SPI to write to the GLCD screen:
 void SPI_write(unsigned char data){
 
 	// Chip Enable (low is asserted)
@@ -475,7 +333,6 @@ void SPI_write(unsigned char data){
 	HAL_GPIO_WritePin(CE_PORT, CE_PIN, GPIO_PIN_SET);
 }
 
-// Writes data to GLCD screen:
 void GLCD_data_write(unsigned char data){
 
 	// Switch to 'data' mode (D/C pin high)
@@ -485,7 +342,6 @@ void GLCD_data_write(unsigned char data){
 	SPI_write(data);
 }
 
-// Writes command to GLCD screen:
 void GLCD_command_write(unsigned char data){
 
 	// Switch to 'command' mode (D/C pin low)
@@ -495,7 +351,6 @@ void GLCD_command_write(unsigned char data){
 	SPI_write(data);
 }
 
-// Initializes GLCD screen:
 void GLCD_init(void){
 
 	// Keep CE high when not transmitting
@@ -514,13 +369,11 @@ void GLCD_init(void){
 	GLCD_command_write(0x0C); // set display mode normal
 }
 
-// Sets screen cursor position:
 void GLCD_setCursor(unsigned char x, unsigned char y){
 	GLCD_command_write(0x80 | x); // column
 	GLCD_command_write(0x40 | y); // bank
 }
 
-// Clears screen:
 void GLCD_clear(void){
 	int i;
 	for(i = 0; i < (GLCD_WIDTH * NUM_BANKS); i++){
@@ -529,35 +382,12 @@ void GLCD_clear(void){
 	GLCD_setCursor(0,0); // return cursor to top left
 }
 
-// Writes character to screen:
 void GLCD_putchar(int font_table_row){
 	int i;
 	for (i = 0; i < 6; i++){
 		GLCD_data_write(font_table[font_table_row][i]);
 	}
 }
-
-// Enable motor (enable: 1 -> enable, 0 -> disable):
-void MOTOR_enable(int enable){
-	if (enable){
-		HAL_GPIO_WritePin(ME_PORT, ME_PIN, GPIO_PIN_SET);
-	}
-	else{
-		HAL_GPIO_WritePin(ME_PORT, ME_PIN, GPIO_PIN_RESET);
-	}
-}
-
-// ISR triggered when lid is opened:
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
-{
- if(GPIO_Pin == GPIO_PIN_4)
- {
-	 MOTOR_enable(0);
- while (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_4) == 1);
- 	 MOTOR_enable(1);
- }
-}
-
 /* USER CODE END 4 */
 
 /**
